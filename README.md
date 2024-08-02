@@ -250,7 +250,7 @@ uci commit sqm
 service sqm restart
 ```
 
-Due to my low internet speeds and constant load (lots of devices), I prefer SQM without flow offloading (as it doesn't work well together).  
+Due to my low internet speeds and constant load (lots of devices), I prefer SQM (without flow offloading, as it doesn't work well together).  
 My network statistics:
 ```
 tp-link:
@@ -298,7 +298,7 @@ export FORCE_UNSAFE_CONFIGURE=1
 chmod -R 777 openwrt
 ```  
 
-Disabling the firewall service with either `fw3 stop`, `service firewall stop` or `opkg remove firewall` results in no internet connection?
+Disabling the firewall service with either `fw3 stop`, `service firewall stop` or `opkg remove firewall` results in no internet connection (even without SQM enabled)?
 
 Could not get the space-optimized build to work:
 - See [files/openwrt-ramips-mt76x8-tplink_tl-wr841n-v14-squashfs-tftp-recovery-sqm-optimized.bin](files/openwrt-ramips-mt76x8-tplink_tl-wr841n-v14-squashfs-tftp-recovery-sqm-optimized.bin)
