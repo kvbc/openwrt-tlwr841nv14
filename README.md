@@ -6,15 +6,11 @@ This guide can be somewhat followed with a Linux machine, but does **not** cover
 
 If you're looking to buy this model solely for OpenWRT, I can wholeheartedly **NOT** recommend it outside of educational/experimental purposes.
 
-<!-- https://static.tp-link.com/TL-WR841N_EU_14.0_03_normal_1524475432652f.jpg -->
+<!-- Full back image: https://static.tp-link.com/TL-WR841N_EU_14.0_03_normal_1524475432652f.jpg -->
 
 Front | Back
 :---: | :--:
 ![](https://static.tp-link.com/TL-WR841N_EU_14.0_01_normal_1524475416205s.jpg) | ![](img/router-back-panel.PNG)
-
-| Back Panel |
-| :--------: |
-| ![](img/router-back-panel.PNG) |
 
 ## Resources
 
