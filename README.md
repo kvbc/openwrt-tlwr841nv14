@@ -4,7 +4,7 @@
 This guide details instructions for (un)installing OpenWRT firmware (w/ optional SQM) and/or building a custom OpenWRT firmware image on a Windows machine.  
 This guide can be somewhat followed with a Linux machine, but does **not** cover the TFTP recovery process on Linux.
 
-If you're looking to buy this model solely for OpenWRT, I can wholeheartedly **NOT** recommend it ❤️
+If you're looking to buy this model solely for OpenWRT, I can wholeheartedly **NOT** recommend it outside of educational/experimental purposes.
 
 Front | Back
 :---: | :--:
