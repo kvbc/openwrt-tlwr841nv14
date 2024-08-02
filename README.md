@@ -250,6 +250,39 @@ uci commit sqm
 service sqm restart
 ```
 
+Due to my low internet speeds and constant load (lots of devices), I prefer SQM without flow offloading (as it doesn't work well together).  
+My network statistics:
+```
+tp-link:
+- speedtest    : 18ms, dl 2.54Mbps, ul 2.81Mbps
+- bufferbloat  : unloaded 70ms, loaded: dl 2.32Mbps +636ms, ul 995Kbps +138ms => (F)
+- in-game ping : 45-60ms
+
+openwrt (clean):
+- speedtest    : 16ms, dl 3.12Mbps, ul 2.19Mbps
+- bufferbloat  : unloaded 18ms, loaded: dl 2.83Mbps +936ms, ul 2.85Mbps +187ms => (F)
+- in-game ping : 30-35ms
+- wifi         : 32ms, dl 3.31Mbps, ul ?
+
+openwrt (sw&hw offloading):
+- speedtest    : 16ms, dl 3.80Mbps, ul 3.17Mbps
+- bufferbloat  : unloaded 40ms, loaded: dl 3.36Mbps +550ms, ul 2.84Mbps ?ms => (F)
+- in-game ping : 30-35ms
+- wifi         : 180ms, dl 2.57Mbps, ul ?
+
+openwrt (sw&hw offloading, sqm):
+- speedtest    : 16ms, dl 4.32Mbps, ul 2.10Mbps
+- bufferbloat  : unloaded 36ms, loaded: dl 2.99Mbps +427ms, ul 1.31Mbps +49ms => (F)
+- in-game ping : 50-60ms
+- wifi         : 29ms, dl 2.61Mbps, ul ?
+
+openwrt (sqm):
+- speedtest    : 18ms, dl 3.46Mbps, ul 1.48Mbps
+- bufferbloat  : unloaded 43ms, loaded: dl 3.03Mbps +297ms, ul 1.92Mbps +78ms => (D)
+- in-game ping : 30-35ms
+- wifi         : 21ms, dl 2.11Mbps, ul ?
+```
+
 ## General Problems
 
 In my case, OpenWRT doesn't save any configuration files (or any files really for that matter) after rebooting.  
