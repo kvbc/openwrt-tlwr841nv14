@@ -2,7 +2,9 @@
 # TP-Link WR841N v14 OpenWRT (SQM) Windows (un)Installation
 
 This guide details instructions for (un)installing OpenWRT firmware (w/ optional SQM) and/or building a custom OpenWRT firmware image on a Windows machine.  
-This guide can also be somewhat followed with a Linux machine, but does **not** cover the TFTP recovery process on Linux.
+This guide can be somewhat followed with a Linux machine, but does **not** cover the TFTP recovery process on Linux.
+
+If you're looking to buy this model solely for OpenWRT, I can wholeheartedly **NOT** recommend it ❤️
 
 Front | Back
 :---: | :--:
@@ -261,9 +263,7 @@ Could not get the space-optimized build to work:
 ## Restoring back to factory firmware
 
 Restoring back to factory firmware should be as easy as downloading the latest firmware image from [the official tp-link website](https://www.tp-link.com/no/support/download/tl-wr841n/#Firmware) and going through the exact same process as installing OpenWRT firmware into the router through TFTP.  
-But it is not, as the officially provided images are boot images, not stripped ones!
-
-I lack knowledge to explain why that's the case, but you must obtain a stripped factory firmware image.  
+But it is not, as you must obtain a stripped (not boot) factory firmware image.  
 In order to do that, you can either strip it yourself, or download one from the `files` directory under this repository (only PL versions available, not really legal but should work).
 
 To strip it yourself, download the factory boot firmware image from tp-link and move it into the shared VM folder.  
