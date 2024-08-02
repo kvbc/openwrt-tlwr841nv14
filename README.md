@@ -10,6 +10,10 @@ Front | Back
 :---: | :--:
 ![](https://static.tp-link.com/TL-WR841N_EU_14.0_01_normal_1524475416205s.jpg) | ![](https://static.tp-link.com/TL-WR841N_EU_14.0_03_normal_1524475432652f.jpg)
 
+| Back Panel |
+| :--------: |
+| ![](img/router-back-panel.PNG) |
+
 ## Resources
 
 - See [OpenWRT on SQM](https://openwrt.org/docs/guide-user/network/traffic-shaping/sqm)
