@@ -1,0 +1,1 @@
+Could not get the sqm-optimized openwrt firmware image to work.

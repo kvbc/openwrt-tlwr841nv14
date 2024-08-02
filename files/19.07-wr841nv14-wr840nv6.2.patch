@@ -1,0 +1,690 @@
+From 9bb23491abdd64f4a748f3d5a282d47d52274cdb Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Tue, 2 Jul 2019 15:54:00 +0200
+Subject: [PATCH 1/6] ramips/leds: use devicetree alias led_wlan
+
+Similiar to the lantiq target use a dts alias to define the wlan led
+instead of static mapping in /etc/board.d/01_leds. Reduce code
+duplication.
+A device tree must define the alias "led-wlan" similiar to "led-boot".
+
+/ {
+        aliases {
+                led-wlan = &led_wlan;
+        };
+
+        [..]
+
+        led_wlan: wlan {
+            label = "tl-wr841n-v14:green:wlan";
+            gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+        };
+};
+
+Signed-off-by: Alexander Couzens <lynxis@fe80.eu>
+---
+ target/linux/ramips/base-files/etc/board.d/01_leds | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/target/linux/ramips/base-files/etc/board.d/01_leds b/target/linux/ramips/base-files/etc/board.d/01_leds
+index 5c005db0c1..47af3364ff 100755
+--- a/target/linux/ramips/base-files/etc/board.d/01_leds
++++ b/target/linux/ramips/base-files/etc/board.d/01_leds
+@@ -1,5 +1,6 @@
+ #!/bin/sh
+ 
++. /lib/functions/leds.sh
+ . /lib/functions/uci-defaults.sh
+ 
+ set_wifi_led() {
+@@ -12,6 +13,9 @@ boardname="${board##*,}"
+ 
+ board_config_update
+ 
++led_wlan="$(get_dt_led wlan)"
++[ -n "$led_wlan" ] && ucidef_set_led_wlan "wifi_led" "wifi" "$led_wlan" "phy0tpt"
++
+ case $board in
+ 3g-6200n|\
+ br-6475nd|\
+-- 
+2.20.1
+
+
+From 0673ddc676a8596a69e8aaa644617e7a98fceef1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alexander=20M=C3=BCller?= <donothingloop@gmail.com>
+Date: Tue, 27 Nov 2018 15:32:18 +0100
+Subject: [PATCH 2/6] ramips: add support for TP-Link TL-WR841n v14
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+TP-Link TL-WR841n v14 is a router based on MediaTek MT7628N.
+
+- MediaTek MT7628NN
+- 32 MB of RAM
+- 4 MB of FLASH
+- 2T2R 2.4 GHz
+- 5x 10/100 Mbps Ethernet
+
+Installation:
+- copy the
+  'openwrt-ramips-mt76x8-tl-wr841n-v14-squashfs-tftp-recovery.bin'
+  file to your tftp server root and rename it to 'tp_recovery.bin'.
+- configure your PC running the TFTP server with the static IP address
+  192.168.0.66/24
+- push the reset button and plug in the power connector. Wait until
+  the orange led starts blinking (~6sec)
+
+Signed-off-by: Alexander MÃ¼ller <donothingloop@gmail.com>
+Signed-off-by: Alexander Couzens <lynxis@fe80.eu> [small modifications gpio-hog]
+---
+ .../ramips/base-files/etc/board.d/01_leds     |   4 +
+ .../ramips/base-files/etc/board.d/02_network  |   1 +
+ target/linux/ramips/dts/TL-WR841NV14.dts      | 136 ++++++++++++++++++
+ target/linux/ramips/image/mt76x8.mk           |  14 ++
+ 4 files changed, 155 insertions(+)
+ create mode 100644 target/linux/ramips/dts/TL-WR841NV14.dts
+
+diff --git a/target/linux/ramips/base-files/etc/board.d/01_leds b/target/linux/ramips/base-files/etc/board.d/01_leds
+index 47af3364ff..94ef951b83 100755
+--- a/target/linux/ramips/base-files/etc/board.d/01_leds
++++ b/target/linux/ramips/base-files/etc/board.d/01_leds
+@@ -322,6 +322,10 @@ tl-wr841n-v13)
+ 	ucidef_set_led_switch "lan4" "lan4" "$boardname:green:lan4" "switch0" "0x10"
+ 	ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch0" "0x01"
+ 	;;
++tplink,tl-wr841n-v14)
++	ucidef_set_led_switch "lan" "lan" "$boardname:green:lan" "switch0" "0x1e"
++	ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch0" "0x01"
++	;;
+ tplink,c2-v1)
+ 	ucidef_set_led_switch "lan" "lan" "$boardname:green:lan" "switch1" "0x1e"
+ 	ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch1" "0x01"
+diff --git a/target/linux/ramips/base-files/etc/board.d/02_network b/target/linux/ramips/base-files/etc/board.d/02_network
+index 8ca1831afe..b9098e0aa4 100755
+--- a/target/linux/ramips/base-files/etc/board.d/02_network
++++ b/target/linux/ramips/base-files/etc/board.d/02_network
+@@ -246,6 +246,7 @@ ramips_setup_interfaces()
+ 	tl-wr840n-v4|\
+ 	tl-wr840n-v5|\
+ 	tl-wr841n-v13|\
++	tplink,tl-wr841n-v14|\
+ 	u7628-01-128M-16M|\
+ 	ubnt-erx|\
+ 	ubnt-erx-sfp|\
+diff --git a/target/linux/ramips/dts/TL-WR841NV14.dts b/target/linux/ramips/dts/TL-WR841NV14.dts
+new file mode 100644
+index 0000000000..6e12361ec9
+--- /dev/null
++++ b/target/linux/ramips/dts/TL-WR841NV14.dts
+@@ -0,0 +1,136 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++/dts-v1/;
++
++#include "mt7628an.dtsi"
++
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/input.h>
++
++/ {
++	compatible = "tplink,tl-wr841n-v14", "mediatek,mt7628an-soc";
++	model = "TP-Link TL-WR841N v14";
++
++	aliases {
++		led-boot = &led_wlan;
++		led-failsafe = &led_wlan;
++		led-upgrade = &led_wlan;
++
++		led-wlan = &led_wlan;
++	};
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x2000000>;
++	};
++
++	keys {
++		compatible = "gpio-keys-polled";
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_RESTART>;
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		lan {
++			label = "tl-wr841n-v14:green:lan";
++			gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
++		};
++
++		wan_green {
++			label = "tl-wr841n-v14:green:wan";
++			gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
++		};
++
++		led_wlan: wlan {
++			label = "tl-wr841n-v14:green:wlan";
++			gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
++			linux,default-trigger = "phy0tpt";
++		};
++
++		wan_orange {
++			label = "tl-wr841n-v14:orange:wan";
++			gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
++		};
++	};
++};
++
++&spi0 {
++	status = "okay";
++
++	flash@0 {
++		compatible = "jedec,spi-nor";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++		m25p,chunked-io = <32>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "boot";
++				reg = <0x0 0x10000>;
++				read-only;
++			};
++
++			partition@10000 {
++				compatible = "tplink,firmware";
++				label = "firmware";
++				reg = <0x10000 0x3e0000>;
++			};
++
++			factory: partition@3f0000 {
++				label = "factory";
++				reg = <0x3f0000 0x10000>;
++				read-only;
++			};
++		};
++	};
++};
++
++&ehci {
++	status = "disabled";
++};
++
++&ohci {
++	status = "disabled";
++};
++
++&wmac {
++	status = "okay";
++	mtd-mac-address = <&factory 0xf100>;
++	mediatek,mtd-eeprom = <&factory 0x10000>;
++};
++
++&ethernet {
++	mtd-mac-address = <&factory 0xf100>;
++	mediatek,portmap = "wllll";
++};
++
++&pinctrl {
++	state_default: pinctrl0 {
++		gpio {
++			ralink,group = "p4led_an", "p3led_an", "p2led_an", "p1led_an", "p0led_an", "wdt";
++			ralink,function = "gpio";
++		};
++	};
++};
++
++&gpio1 {
++	led_wlan_enable {
++		gpio-hog;
++		gpios = <11 GPIO_ACTIVE_HIGH>;
++		output-high;
++	};
++};
+diff --git a/target/linux/ramips/image/mt76x8.mk b/target/linux/ramips/image/mt76x8.mk
+index d0c66a0e23..93997ea64b 100644
+--- a/target/linux/ramips/image/mt76x8.mk
++++ b/target/linux/ramips/image/mt76x8.mk
+@@ -260,6 +260,20 @@ define Device/tl-wr841n-v13
+ endef
+ TARGET_DEVICES += tl-wr841n-v13
+ 
++define Device/tplink_tl-wr841n-v14
++  $(Device/tplink)
++  DTS := TL-WR841NV14
++  IMAGE_SIZE := 3968k
++  DEVICE_TITLE := TP-Link TL-WR841N v14
++  TPLINK_FLASHLAYOUT := 4Mmtk
++  TPLINK_HWID := 0x08410014
++  TPLINK_HWREV := 0x1
++  TPLINK_HWREVADD := 0x14
++  TPLINK_HVERSION := 3
++  IMAGE/tftp-recovery.bin := pad-extra 64k | $$(IMAGE/factory.bin)
++endef
++TARGET_DEVICES += tplink_tl-wr841n-v14
++
+ define Device/tplink_c20-v4
+   $(Device/tplink)
+   DTS := ArcherC20v4
+-- 
+2.20.1
+
+
+From 3f93962cd96bbd52b0ca49a4126f2dc0d7786de4 Mon Sep 17 00:00:00 2001
+From: user <user@computer>
+Date: Wed, 24 Jun 2020 00:37:07 +0200
+Subject: [PATCH 3/6] ramips: tl-wr841nv14: fix bogus mediatek,portmap
+
+backported from 7a387bf9a0d73f7c581e2c9ae
+Original commit by Sungbo Eo <mans0n@gorani.run>
+---
+ target/linux/ramips/dts/TL-WR841NV14.dts | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/target/linux/ramips/dts/TL-WR841NV14.dts b/target/linux/ramips/dts/TL-WR841NV14.dts
+index 6e12361ec9..7532bf57ac 100644
+--- a/target/linux/ramips/dts/TL-WR841NV14.dts
++++ b/target/linux/ramips/dts/TL-WR841NV14.dts
+@@ -115,7 +115,10 @@
+ 
+ &ethernet {
+ 	mtd-mac-address = <&factory 0xf100>;
+-	mediatek,portmap = "wllll";
++};
++
++&esw {
++	mediatek,portmap = <0x3e>;
+ };
+ 
+ &pinctrl {
+-- 
+2.20.1
+
+
+From 0fecc01985a2ee50776840b2c4fbf3702d5eaa96 Mon Sep 17 00:00:00 2001
+From: Piotr Dymacz <pepe2k@gmail.com>
+Date: Fri, 31 Jan 2020 15:22:54 +0100
+Subject: [PATCH 4/6] base-files: diag: restore default trigger for 'boot' LED
+
+For devices without a dedicated 'diag' LED, we use sometimes one of
+other LEDs for indicating at least 'boot', 'failsafe' and 'upgrade'
+stages. In some cases, at the same time these LEDs have defined default
+triggers in DTS using 'linux,default-trigger' property. Current 'diag'
+setup removes the trigger and turns off 'boot' LED after bootup.
+
+One of the examples of such device is TP-Link TL-WR841N v14 (ramips)
+which uses 'wlan' LED with defined 'linux,default-trigger' for 'diag':
+
+aliases {
+        led-boot = &led_wlan;
+        led-failsafe = &led_wlan;
+        led-upgrade = &led_wlan;
+};
+
+[...]
+
+led_wlan: wlan {
+        label = "tl-wr841n-v14:green:wlan";
+        gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+        linux,default-trigger = "phy0tpt";
+};
+
+This patch extends 'diag.sh' and 'leds.sh' scripts to make sure default
+trigger defined in DTS is restored for 'diag' LED which isn't used for
+indicating 'running' stage.
+
+Acked-by: Adrian Schmutzler <freifunk@adrianschmutzler.de>
+Signed-off-by: Piotr Dymacz <pepe2k@gmail.com>
+[ backported from a422b171ac17edde296b48e2b3e9c9845d773609 ]
+backport note: removed PKG_RELEASE version increase for patch compatibility.
+should be re-added if this ever finds its way into the official tree.
+---
+ package/base-files/files/etc/diag.sh          |  2 ++
+ .../base-files/files/lib/functions/leds.sh    | 27 ++++++++++++++++---
+ 2 files changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/package/base-files/files/etc/diag.sh b/package/base-files/files/etc/diag.sh
+index 8eb36c6feb..37a8ec758e 100644
+--- a/package/base-files/files/etc/diag.sh
++++ b/package/base-files/files/etc/diag.sh
+@@ -37,6 +37,8 @@ set_led_state() {
+ 		;;
+ 	done)
+ 		status_led_off
++		[ "$status_led" != "$running" ] && \
++			status_led_restore_trigger "boot"
+ 		[ -n "$running" ] && {
+ 			status_led="$running"
+ 			status_led_on
+diff --git a/package/base-files/files/lib/functions/leds.sh b/package/base-files/files/lib/functions/leds.sh
+index 8a1d21caef..43b2fe02ed 100644
+--- a/package/base-files/files/lib/functions/leds.sh
++++ b/package/base-files/files/lib/functions/leds.sh
+@@ -1,16 +1,24 @@
+ #!/bin/sh
+ # Copyright (C) 2013 OpenWrt.org
+ 
+-get_dt_led() {
+-	local label
++get_dt_led_path() {
+ 	local ledpath
+ 	local basepath="/proc/device-tree"
+ 	local nodepath="$basepath/aliases/led-$1"
+ 
+ 	[ -f "$nodepath" ] && ledpath=$(cat "$nodepath")
++	[ -n "$ledpath" ] && ledpath="$basepath$ledpath"
++
++	echo "$ledpath"
++}
++
++get_dt_led() {
++	local label
++	local ledpath=$(get_dt_led_path $1)
++
+ 	[ -n "$ledpath" ] && \
+-		label=$(cat "$basepath$ledpath/label" 2>/dev/null) || \
+-		label=$(cat "$basepath$ledpath/chan-name" 2>/dev/null)
++		label=$(cat "$ledpath/label" 2>/dev/null) || \
++		label=$(cat "$ledpath/chan-name" 2>/dev/null)
+ 
+ 	echo "$label"
+ }
+@@ -35,6 +43,17 @@ led_off() {
+ 	led_set_attr $1 "brightness" 0
+ }
+ 
++status_led_restore_trigger() {
++	local trigger
++	local ledpath=$(get_dt_led_path $1)
++
++	[ -n "$ledpath" ] && \
++		trigger=$(cat "$ledpath/linux,default-trigger" 2>/dev/null)
++
++	[ -n "$trigger" ] && \
++		led_set_attr "$(get_dt_led $1)" "trigger" "$trigger"
++}
++
+ status_led_set_timer() {
+ 	led_timer $status_led "$1" "$2"
+ 	[ -n "$status_led2" ] && led_timer $status_led2 "$1" "$2"
+-- 
+2.20.1
+
+
+From 42a78ab9f0ff42bf7a034f2a8b193ee0ac402769 Mon Sep 17 00:00:00 2001
+From: user <user@computer>
+Date: Sat, 11 Jul 2020 00:32:46 +0200
+Subject: [PATCH 5/6] ramips: TL-WR841Nv14: fix eeprom offset in factory
+ partition
+
+---
+ target/linux/ramips/dts/TL-WR841NV14.dts | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/linux/ramips/dts/TL-WR841NV14.dts b/target/linux/ramips/dts/TL-WR841NV14.dts
+index 7532bf57ac..7d728adebc 100644
+--- a/target/linux/ramips/dts/TL-WR841NV14.dts
++++ b/target/linux/ramips/dts/TL-WR841NV14.dts
+@@ -110,7 +110,6 @@
+ &wmac {
+ 	status = "okay";
+ 	mtd-mac-address = <&factory 0xf100>;
+-	mediatek,mtd-eeprom = <&factory 0x10000>;
+ };
+ 
+ &ethernet {
+-- 
+2.20.1
+
+
+From d1e5d41b92b31211ee691dd0476f065775132d26 Mon Sep 17 00:00:00 2001
+From: user <user@computer>
+Date: Fri, 17 Jul 2020 20:44:35 +0200
+Subject: [PATCH 6/6] ramips: add support for TP-Link TL-WR840N v6.2
+
+Add support for TP-Link TL-WR840N v6.2 to ramips target.
+This model is almost identical to TL-WR841N v14.
+
+HW data:
+  MediaTek MT7628 / 4MB SPI-NOR / 32MB RAM
+  2T2R 2.4GHz Wifi / 1x 100MBit WAN / 4x 100MBit LAN
+
+Installation:
+- rename 'openwrt-ramips-mt76x8-tplink_tl-wr840n-v62-squashfs-tftp-recovery.bin'
+  to 'tp_recovery.bin' and copy to your TFTP server.
+- configure TFTP server to listen on 192.168.0.66/24
+- plug in power while holding reset button.
+- wait until 1-2s after the orange led starts blinking, then release button.
+- firmware will be donwloaded from TFTP and flashed
+
+Back to stock:
+- download and extract original firmware
+- dd if='TL-WR840Nv6_EU_0.9.1_4.16_up_boot[180614-rel40494].bin' of=tp_recovery.bin bs=512 skip=1
+- copy tp_recovery.bin to your TFTP server and flash like described above
+
+Tested on EU model of v6.2
+This patch is NOT compatible with 6.0/6.1. These have different HWID and GPIO assignments!
+
+Inspired by 3fd97c522bb791058215e736a00b86aa8af92363
+Requires cc1147072d24eab3dfc802ceeb237fbeb584d946
+---
+ .../ramips/base-files/etc/board.d/01_leds     |   4 +
+ .../ramips/base-files/etc/board.d/02_network  |   1 +
+ target/linux/ramips/dts/TL-WR840NV62.dts      | 138 ++++++++++++++++++
+ target/linux/ramips/image/mt76x8.mk           |  14 ++
+ 4 files changed, 157 insertions(+)
+ create mode 100644 target/linux/ramips/dts/TL-WR840NV62.dts
+
+diff --git a/target/linux/ramips/base-files/etc/board.d/01_leds b/target/linux/ramips/base-files/etc/board.d/01_leds
+index 94ef951b83..9eabeb1f37 100755
+--- a/target/linux/ramips/base-files/etc/board.d/01_leds
++++ b/target/linux/ramips/base-files/etc/board.d/01_leds
+@@ -314,6 +314,10 @@ tl-wr840n-v4)
+ 	ucidef_set_led_switch "lan" "lan" "$boardname:green:lan" "switch0" "0x1e"
+ 	ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch0" "0x01"
+ 	;;
++tplink,tl-wr840n-v62)
++	ucidef_set_led_switch "lan" "lan" "$boardname:green:lan" "switch0" "0x1e"
++	ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch0" "0x01"
++	;;
+ tl-wr841n-v13)
+ 	ucidef_set_led_wlan "wlan2g" "wlan2g" "$boardname:green:wlan" "phy0tpt"
+ 	ucidef_set_led_switch "lan1" "lan1" "$boardname:green:lan1" "switch0" "0x2"
+diff --git a/target/linux/ramips/base-files/etc/board.d/02_network b/target/linux/ramips/base-files/etc/board.d/02_network
+index b9098e0aa4..302aeee991 100755
+--- a/target/linux/ramips/base-files/etc/board.d/02_network
++++ b/target/linux/ramips/base-files/etc/board.d/02_network
+@@ -243,6 +243,7 @@ ramips_setup_interfaces()
+ 	tplink,c50-v4|\
+ 	tplink,tl-mr3420-v5|\
+ 	tplink,tl-wr842n-v5|\
++	tplink,tl-wr840n-v62|\
+ 	tl-wr840n-v4|\
+ 	tl-wr840n-v5|\
+ 	tl-wr841n-v13|\
+diff --git a/target/linux/ramips/dts/TL-WR840NV62.dts b/target/linux/ramips/dts/TL-WR840NV62.dts
+new file mode 100644
+index 0000000000..1e9f5a4b9b
+--- /dev/null
++++ b/target/linux/ramips/dts/TL-WR840NV62.dts
+@@ -0,0 +1,138 @@
++// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
++/dts-v1/;
++
++#include "mt7628an.dtsi"
++
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/input.h>
++
++/ {
++	compatible = "tplink,tl-wr840n-v62", "mediatek,mt7628an-soc";
++	model = "TP-Link TL-WR840N v6.2";
++
++	aliases {
++		led-boot = &led_wlan;
++		led-failsafe = &led_wlan;
++		led-upgrade = &led_wlan;
++
++		led-wlan = &led_wlan;
++	};
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x2000000>;
++	};
++
++	keys {
++		compatible = "gpio-keys-polled";
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_RESTART>;
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		lan {
++			label = "tl-wr840n-v62:green:lan";
++			gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
++		};
++
++		wan_green {
++			label = "tl-wr840n-v62:green:wan";
++			gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
++		};
++
++		led_wlan: wlan {
++			label = "tl-wr840n-v62:green:wlan";
++			gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
++			linux,default-trigger = "phy0tpt";
++		};
++
++		wan_orange {
++			label = "tl-wr840n-v62:orange:wan";
++			gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
++		};
++	};
++};
++
++&spi0 {
++	status = "okay";
++
++	flash@0 {
++		compatible = "jedec,spi-nor";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++		m25p,chunked-io = <32>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "boot";
++				reg = <0x0 0x10000>;
++				read-only;
++			};
++
++			partition@10000 {
++				compatible = "tplink,firmware";
++				label = "firmware";
++				reg = <0x10000 0x3e0000>;
++			};
++
++			factory: partition@3f0000 {
++				label = "factory";
++				reg = <0x3f0000 0x10000>;
++				read-only;
++			};
++		};
++	};
++};
++
++&ehci {
++	status = "disabled";
++};
++
++&ohci {
++	status = "disabled";
++};
++
++&wmac {
++	status = "okay";
++	mtd-mac-address = <&factory 0xf100>;
++};
++
++&ethernet {
++	mtd-mac-address = <&factory 0xf100>;
++};
++
++&esw {
++	mediatek,portmap = <0x3e>;
++};
++
++&pinctrl {
++	state_default: pinctrl0 {
++		gpio {
++			ralink,group = "p4led_an", "p3led_an", "p2led_an", "p1led_an", "p0led_an", "wdt";
++			ralink,function = "gpio";
++		};
++	};
++};
++
++&gpio1 {
++	led_wlan_enable {
++		gpio-hog;
++		gpios = <11 GPIO_ACTIVE_HIGH>;
++		output-high;
++	};
++};
+diff --git a/target/linux/ramips/image/mt76x8.mk b/target/linux/ramips/image/mt76x8.mk
+index 93997ea64b..405e7acd98 100644
+--- a/target/linux/ramips/image/mt76x8.mk
++++ b/target/linux/ramips/image/mt76x8.mk
+@@ -247,6 +247,20 @@ define Device/tl-wr840n-v5
+ endef
+ TARGET_DEVICES += tl-wr840n-v5
+ 
++define Device/tplink_tl-wr840n-v62
++  $(Device/tplink)
++  DTS := TL-WR840NV62
++  IMAGE_SIZE := 3968k
++  DEVICE_TITLE := TP-Link TL-WR840N v6.2
++  TPLINK_FLASHLAYOUT := 4Mmtk
++  TPLINK_HWID := 0x08400006
++  TPLINK_HWREV := 0x1
++  TPLINK_HWREVADD := 0x7
++  TPLINK_HVERSION := 3
++  IMAGE/tftp-recovery.bin := pad-extra 64k | $$(IMAGE/factory.bin)
++endef
++TARGET_DEVICES += tplink_tl-wr840n-v62
++
+ define Device/tl-wr841n-v13
+   $(Device/tplink)
+   DTS := TL-WR841NV13
+-- 
+2.20.1
+
