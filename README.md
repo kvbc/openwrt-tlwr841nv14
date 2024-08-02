@@ -1,7 +1,7 @@
 
-# TP-Link WR841N(D) v14 OpenWRT (SQM) Windows (un)Installation
+# TP-Link WR841N(D) v14 OpenWRT Windows Guide
 
-This guide details instructions for (un)installing OpenWRT firmware (w/ optional SQM) and/or building a custom OpenWRT firmware image for TP-Link WR841N(D) v14 on a Windows machine.  
+This guide details instructions for installing OpenWRT firmware (w/ optional SQM) on, building a custom OpenWRT firmware image for, configuring and factory firmware recovery for TP-Link WR841N(D) v14 on a Windows machine.  
 This guide can be somewhat followed with a Linux machine, but does **not** cover the TFTP recovery process on Linux.
 
 If you're looking to buy this model solely for OpenWRT, I can wholeheartedly **NOT** recommend it outside of educational/experimental purposes.
