@@ -30,7 +30,7 @@ This can potentially result in unwanted instability and you bricking your router
 What if you *really* want OpenWRT installed on this router?  
 If you're just looking to get all the basic packages (w/ optional SQM), look at the available OpenWRT firmware disk images from the `files` directory under this repository.  
 Otherwise, if you want a custom configuration and/or additional packaged installed, as this specific hardware version (v14) is not officially supported, there's no pre-built OpenWRT firmware disk images available to download.  
-Meaning, you will have to build our own image from scratch, using the old OpenWRT imagebuilder with all possible space saving measures.  
+Meaning, you will have to build your own image from scratch, using the old OpenWRT imagebuilder with all possible space saving measures.  
 
 ### Building the OpenWRT firmware disk image
 
