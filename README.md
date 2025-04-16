@@ -14,6 +14,7 @@ Front | Back
 
 ## Resources
 
+- See [OpenWRT forum topic on this guide](https://forum.openwrt.org/t/tp-link-wr841n-d-v14-installation-custom-image-configuration-and-factory-firmware-recovery-guide/206030)
 - See [OpenWRT on SQM](https://openwrt.org/docs/guide-user/network/traffic-shaping/sqm)
 - See [OpenWRT device page](https://openwrt.org/toh/tp-link/tl-wr841nd)
 - See [Wikipedia on Bufferbloat](https://en.wikipedia.org/wiki/bufferbloat)
